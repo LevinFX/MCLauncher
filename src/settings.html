@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einstellungen</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <button class="nav-button" data-page="index">Spielen</button>
+            <button class="nav-button" data-page="report">Bug melden</button>
+            <button class="nav-button" data-page="settings">Einstellungen</button>
+        </nav>
+        <main class="main-content">
+            <h1>Einstellungen</h1>
+            <form id="settings-form">
+                <label for="mods-path">Mods-Ordner:</label>
+                <input type="text" id="mods-path" placeholder="Standardpfad wird verwendet">
+
+                <label for="launcher-path">Minecraft-Launcher:</label>
+                <input type="text" id="launcher-path" placeholder="Standardpfad wird verwendet">
+
+                <label for="ram-amount">RAM (MB):</label>
+                <input type="number" id="ram-min" placeholder="RAM Min (2048)">
+                <input type="number" id="ram-max" placeholder="RAM Max (4016)">
+
+                <button type="submit">Speichern</button>
+            </form>
+        </main>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>

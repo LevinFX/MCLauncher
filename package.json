@@ -1,0 +1,20 @@
+{
+  "name": "levinlauncher",
+  "version": "1.0.0",
+  "description": "A Minecraft Launcher for my Servers",
+  "main": "main.js",
+  "scripts": {
+    "test": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "LevinLauncher"
+  },
+  "author": "LevinFX",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^33.2.1",
+    "minecraft-launcher-core": "^3.18.2",
+    "msmc": "^5.0.5"
+  }
+}

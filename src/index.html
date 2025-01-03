@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Launcher</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <button class="nav-button" data-page="index">Spielen</button>
+            <button class="nav-button" data-page="report">Bug melden</button>
+            <button class="nav-button" data-page="settings">Einstellungen</button>
+        </nav>
+        <main class="main-content">
+            <div class="header">
+                <select id="modpack-dropdown">
+                    <option value="" disabled selected>Wähle ein Modpack</option>
+                </select>
+                <button id="settings-button">⚙️</button>
+            </div>
+            <button id="launch-button" class="launch">LAUNCH</button>
+        </main>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>
