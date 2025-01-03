@@ -28,7 +28,7 @@ app.whenReady().then(() => {
         if (fs.existsSync(settingsPath)) {
             return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
         }
-        return {}; // Falls keine Einstellungen gespeichert wurden
+        return {};
     });
 
     function loadSettings(){
@@ -36,7 +36,7 @@ app.whenReady().then(() => {
         if (fs.existsSync(settingsPath)) {
             return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
         }
-        return {}; // Falls keine Einstellungen gespeichert wurden
+        return {};
     }
 
     ipcMain.handle('launch-minecraft', () => {
@@ -47,13 +47,9 @@ app.whenReady().then(() => {
 
         if(fs.existsSync(settingsPath)) {
             let settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
-            
-            //Launch using the 'raw' gui framework (can be 'electron' or 'nwjs')
             authManager.launch("electron").then(async (xboxManager) => {
-            //Generate the Minecraft login token
             const token = await xboxManager.getMinecraft();
             const atoken = await xboxManager;
-            console.log("Hier")
             let launchOpts = {
                 clientPackage: null,
                 authorization:mcl.Authenticator.validate(atoken.msToken.access_token, token.mcToken),
