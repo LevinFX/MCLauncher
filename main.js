@@ -52,7 +52,7 @@ app.whenReady().then(() => {
             const atoken = await xboxManager;
             let launchOpts = {
                 clientPackage: null,
-                authorization:mcl.Authenticator.validate(atoken.msToken.access_token, token.mcToken),
+                authorization: token.mclc(),//mcl.Authenticator.validate(atoken.msToken.access_token, token.mcToken),
                 root: "./minecraft",
                 version: {
                     number: "1.20",
@@ -62,10 +62,10 @@ app.whenReady().then(() => {
                     max: settings.ramMax+"M",
                     min: settings.ramMin+"M"
                 },
+                //forge: "./minecraft/forge.jar"
             }
             launcher.launch(launchOpts);
             
-            console.log("Here")
             launcher.on('debug', (e) => console.log(e));
         launcher.on('data', (e) => console.log(e));
         })
