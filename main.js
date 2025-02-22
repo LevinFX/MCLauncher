@@ -55,18 +55,18 @@ app.whenReady().then(() => {
                 authorization: token.mclc(),//mcl.Authenticator.validate(atoken.msToken.access_token, token.mcToken),
                 root: "./minecraft",
                 version: {
-                    number: "1.20",
+                    number: "1.20.1",
                     type: "release"
                 },
                 memory: {
                     max: settings.ramMax+"M",
                     min: settings.ramMin+"M"
                 },
-                //forge: "./minecraft/forge.jar"
+                forge: "./minecraft/forge.jar"
             }
             launcher.launch(launchOpts);
             
-            launcher.on('debug', (e) => console.log(e));
+        launcher.on('debug', (e) => console.log(e));
         launcher.on('data', (e) => console.log(e));
         })
         }else{

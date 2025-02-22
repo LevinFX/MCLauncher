@@ -40,18 +40,6 @@ body {
     justify-content: center;
 }
 
-.header {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-#modpack-dropdown {
-    padding: 10px;
-    font-size: 16px;
-}
-
 .launch {
     background-color: #ff4444;
     color: white;
