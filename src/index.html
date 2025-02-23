@@ -1,30 +1,28 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Launcher</title>
-    <link rel="stylesheet" href="index.css">
-</head>
-<body>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
     <div id="dragger"></div>
     <div class="container">
-        <nav class="sidebar">
-            <button class="nav-button" data-page="index">Spielen</button>
-            <button class="nav-button" data-page="server">Server Status</button>
-            <button class="nav-button" data-page="settings">Einstellungen</button>
-        </nav>
-        <main class="main-content">
-            <button id="launch-button" class="launch">LAUNCH</button>
-            <div id="loading-spinner" class="spinner" style="display: none;"></div>
-            <div id="console">
-                <pre id="console-output"></pre>
-            </div>
-            <progress id="progress-bar" value="0" max="100"></progress>
-
-        </main>
-        
+      <nav class="sidebar">
+        <button class="nav-button" data-page="index">Spielen</button>
+        <button class="nav-button" data-page="server">Server Status</button>
+        <button class="nav-button" data-page="settings">Einstellungen</button>
+      </nav>
+      <main class="main-content">
+        <button id="launch-button" class="launch">LAUNCH</button>
+        <div id="loading-spinner" class="spinner" style="display: none"></div>
+        <div id="console">
+          <pre id="console-output"></pre>
+        </div>
+        <progress id="progress-bar" value="0" max="100"></progress>
+      </main>
     </div>
     <script src="renderer.js"></script>
-</body>
+  </body>
 </html>
