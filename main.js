@@ -1,24 +1,78 @@
 const { app, BrowserWindow, ipcMain, window } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const mcl = require('minecraft-launcher-core');
 const { Auth } = require("msmc");
 const {Downloader} = require("nodejs-file-downloader");
 const Admzip = require('adm-zip');
+
+
 let mainWindow;
 
-app.whenReady().then(() => {
+function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: false,
-            contextIsolation: true,
-        },
+      width: 800,
+      height: 600,
+      webPreferences: {
+        preload: path.join(__dirname, 'preload.js'),
+        nodeIntegration: false,
+        contextIsolation: true,
+      },
     });
-
+  
     mainWindow.loadFile('src/index.html');
+  }
+  
+  // Event-Listener für den Auto-Updater
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Suche nach Updates...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update verfügbar:', info);
+    // Optional: Sende eine Nachricht an den Renderer, um den Benutzer zu informieren
+    mainWindow.webContents.send('update_available', info);
+  });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('Kein Update verfügbar:', info);
+  });
+  
+  autoUpdater.on('error', (err) => {
+    console.log('Fehler beim Updater:', err);
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    let logMessage = `Download-Geschwindigkeit: ${progressObj.bytesPerSecond} B/s - ${progressObj.percent.toFixed(2)}%`;
+    logMessage += ` (${progressObj.transferred}/${progressObj.total})`;
+    console.log(logMessage);
+    // Sende Fortschrittsdaten an den Renderer
+    mainWindow.webContents.send('download_progress', progressObj);
+  });
+  
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update heruntergeladen:', info);
+    // Nach 15 Sekunden Update installieren und App schließen
+    setTimeout(() => {
+      autoUpdater.quitAndInstall();
+    }, 15000);
+  });
+  
+  app.whenReady().then(() => {
+    createWindow();
+    // Prüfe auf Updates und benachrichtige den Benutzer, falls ein Update gefunden wurde.
+    autoUpdater.checkForUpdatesAndNotify();
+  });
+  
+  // Optional: Beim erneuten Öffnen der App, falls alle Fenster geschlossen wurden
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+  
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
 
     ipcMain.handle('save-settings', (event, settings) => {
         const settingsPath = path.join(app.getPath('userData'), 'settings.json');
@@ -195,6 +249,5 @@ ipcMain.handle('launch-minecraft', () => {
   } else {
     console.log('Error Launching because of not existing settings.');
          }
-        });
     });
 });

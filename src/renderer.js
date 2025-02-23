@@ -63,4 +63,21 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('ram-max').value = settings.ramMax || '';
         });
     }
+
+window.electronAPI.onUpdateAvailable((event, info) => {
+    // Informiere den Benutzer, dass ein Update verfügbar ist
+    console.log('Update verfügbar:', info);
+    // Hier kannst du eine Benachrichtigung oder einen visuellen Hinweis einblenden
+  });
+  
+  window.electronAPI.onDownloadProgress((event, progressObj) => {
+    // Aktualisiere eine Fortschrittsanzeige im UI
+    console.log('Download-Fortschritt:', progressObj.percent);
+  });
+  
+  window.electronAPI.onUpdateDownloaded((event, info) => {
+    // Informiere den Benutzer, dass das Update installiert wird
+    console.log('Update wird installiert in 15 Sekunden...', info);
+  });
+  
 });
