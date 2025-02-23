@@ -33,15 +33,6 @@ app.whenReady().then(() => {
         return {};
     });
 
-    function loadSettings(){
-        const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-        if (fs.existsSync(settingsPath)) {
-            return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-        }
-        return {};
-    }
-
-
     async function downloadForge(){
         console.log("Forge wird heruntergeladen...");
         const downloader = new Downloader({
@@ -52,6 +43,8 @@ app.whenReady().then(() => {
             onProgress: function (percentage, chunk, remainingSize) {
                 console.log(`${percentage}%`);
                 console.log(`Remaining Bytes: ${remainingSize}`);
+                mainWindow.webContents.send('minecraft-progress', percentage);
+
             }
         });
 
@@ -92,6 +85,8 @@ app.whenReady().then(() => {
             onProgress: function (percentage, chunk, remainingSize) {
                 console.log(`${percentage}%`);
                 console.log(`Remaining Bytes: ${remainingSize}`);
+                mainWindow.webContents.send('minecraft-progress', percentage);
+
             }
         });
 
@@ -136,6 +131,16 @@ app.whenReady().then(() => {
             }
             launcher.launch(launchOpts);
             
+             // Sende Debug- und Log-Meldungen an den Renderer
+         launcher.on('debug', (e) => {
+            console.log(e);
+            mainWindow.webContents.send('minecraft-log', e);
+        });
+        launcher.on('data', (e) => {
+            console.log(e);
+            mainWindow.webContents.send('minecraft-log', e);
+        });
+
         launcher.on('debug', (e) => console.log(e));
         launcher.on('data', (e) => console.log(e));
         })

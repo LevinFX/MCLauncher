@@ -8,13 +8,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Launch Minecraft Button
     const launchButton = document.getElementById('launch-button');
+    const loadingSpinner = document.getElementById('loading-spinner');
+
     if (launchButton) {
         launchButton.addEventListener('click', () => {
+            launchButton.style.display = 'none';
+            loadingSpinner.style.display = 'block';
             window.electronAPI.launchMinecraft();
         });
     }
+
+    // Konsolen-Logs anzeigen
+    window.electronAPI.onMinecraftLog((event, message) => {
+        const consoleOutput = document.getElementById('console-output');
+        consoleOutput.textContent += message + "\n";
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    });
+
+    // Fortschrittsanzeige aktualisieren
+    window.electronAPI.onMinecraftProgress((event, percentage) => {
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.value = percentage;
+    });
+
+    // Nach Spielstart Spinner entfernen
+    window.electronAPI.onMinecraftLog((event, message) => {
+        if (message.includes("Launching")) {
+            loadingSpinner.style.display = 'none';
+        }
+    });
+
 
     // Einstellungen speichern
     const settingsForm = document.getElementById('settings-form');
