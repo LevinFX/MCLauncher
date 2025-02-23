@@ -24,7 +24,14 @@
     "nodejs-file-downloader": "^4.13.0"
   },
   "build": {
-    "appId": "de.levinjs.mclauncher"
+    "appId": "de.levinjs.mclauncher",
+    "publish": [
+    {
+      "provider": "github",
+      "owner": "LevinFX",
+      "repo": "MCLauncher"
+    }
+  ]
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.7.0",
