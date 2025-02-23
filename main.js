@@ -4,8 +4,7 @@ const fs = require('fs');
 const mcl = require('minecraft-launcher-core');
 const { Auth } = require("msmc");
 const {Downloader} = require("nodejs-file-downloader");
-const extract = require('extract-zip');
-const axios = require("axios");
+const Admzip = require('adm-zip');
 let mainWindow;
 
 app.whenReady().then(() => {
@@ -42,6 +41,7 @@ app.whenReady().then(() => {
         return {};
     }
 
+
     function downloadForge(){
         console.log("Forge wird heruntergeladen...");
         const forgeVersion = "1.20.1";
@@ -56,63 +56,45 @@ app.whenReady().then(() => {
         });
     }
 
-    async function downloadMods() {
-        console.log("Mods werden heruntergeladen...");
-  // URL des Zip-Archivs (direkter Download-Link)
-  const url = "https://www.dropbox.com/scl/fo/k3bgafwk3g8gv20z89je9/AIAh3Z8CR_ssUGh2SBqYg5c?rlkey=sc958rganokob1wz809pudf01&st=ndu2kww6&dl=1";
-  
-  // Pfad, unter dem die Zip-Datei gespeichert wird
-  const zipPath = path.join(__dirname, 'mods.zip');
-  
-  // Zielordner für die entpackten Mods (Projektordner/minecraft/mods)
-  const outputFolder = path.join(__dirname, 'minecraft', 'mods');
-
-  try {
-    console.log('Download der Mods gestartet...');
-
-    // Sicherstellen, dass der Zielordner existiert
-    if (!fs.existsSync(outputFolder)) {
-      fs.mkdirSync(outputFolder, { recursive: true });
+    function extractMods(){
+        console.log("Mods werden entpackt...");
+        var zip = new Admzip("./minecraft/mods/mods.zip");
+        try {
+            zip.extractAllTo("./minecraft/mods/", true);
+            console.log("Mods erfolgreich entpackt!");
+        } catch (error) {
+            console.log(`Fehler beim Entpacken der Mods: ${error}`);
+        }
+        try {
+            fs.unlinkSync("./minecraft/mods/mods.zip");
+            console.log("Zip-Datei gelöscht!");
+        } catch (error) {
+            console.log(`Fehler beim Löschen der Zip-Datei: ${error}`);
+        }
+        
     }
 
-    // Herunterladen der Zip-Datei als Stream
-    const response = await axios({
-      method: 'GET',
-      url: url,
-      responseType: 'stream'
-    });
+    async function downloadMods() {
+        console.log("Mods werden heruntergeladen...");
+        
+        const downloader = new Downloader({
+            url: "https://www.dropbox.com/scl/fo/k3bgafwk3g8gv20z89je9/AIAh3Z8CR_ssUGh2SBqYg5c?rlkey=sc958rganokob1wz809pudf01&st=ndu2kww6&dl=1",
+            directory: "./minecraft/mods",
+            fileName: "mods.zip",
+            cloneFiles: false,
+            onProgress: function (percentage, chunk, remainingSize) {
+                console.log(`${percentage}%`);
+                console.log(`Remaining Bytes: ${remainingSize}`);
+            }
+        });
 
-    // Speichern des Streams in eine Datei
-    const writer = fs.createWriteStream(zipPath);
-    response.data.pipe(writer);
-
-    // Warten bis der Download abgeschlossen ist
-    await new Promise((resolve, reject) => {
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
-
-    console.log('Download abgeschlossen. Entpacke die Mods...');
-
-    console.log("Out: "+outputFolder)
-    console.log("In: "+zipPath)
-    // Entpacken der Zip-Datei in den Zielordner
-    await extract(zipPath, { dir: outputFolder });
-
-    console.log('Mods wurden erfolgreich nach "minecraft/mods" extrahiert.');
-
-    // Löschen der Zip-Datei nach erfolgreicher Extraktion
-    fs.unlink(zipPath, (err) => {
-      if (err) {
-        console.error('Fehler beim Löschen der Zip-Datei:', err);
-      } else {
-        console.log('Zip-Datei wurde gelöscht.');
-      }
-    });
-    
-  } catch (error) {
-    console.error('Fehler beim Herunterladen oder Entpacken der Mods:', error);
-  }
+        try {
+            await downloader.download();
+            console.log(`Mods erfolgreich heruntergeladen!`);
+            extractMods();
+        } catch (error) {
+            console.log(`Fehler beim Herunterladen der Mods: ${error}`);
+        }
 }
 
     ipcMain.handle('launch-minecraft', () => {
