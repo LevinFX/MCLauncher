@@ -6,15 +6,14 @@ const mcl = require("minecraft-launcher-core");
 const { Auth } = require("msmc");
 const { Downloader } = require("nodejs-file-downloader");
 const Admzip = require("adm-zip");
-const fsExtra = require('fs-extra');
 
 let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    minHeight: 450,
+    width: 1000,
+    height: 800,
+    minHeight: 800,
     minWidth: 600,
     titleBarStyle: "hidden",
     titleBarOverlay: {
@@ -98,6 +97,14 @@ ipcMain.handle("load-settings", () => {
   return {};
 });
 
+ipcMain.handle("get-mod-files", () => {
+  const modsDir = path.join(__dirname, "minecraft", "mods");
+  if(fs.existsSync(modsDir)) {
+    return fs.readdirSync(modsDir);
+  }
+  return [];
+});
+
 async function downloadForge() {
   console.log("Forge wird heruntergeladen...");
   mainWindow.webContents.send("minecraft-log", "Forge wird heruntergeladen...");
@@ -167,9 +174,37 @@ async function downloadMods() {
   console.log("Mods werden heruntergeladen...");
   mainWindow.webContents.send("minecraft-log", "Mods werden aktualisiert...");
 
+  // Lese die Einstellungen und ermittle die Liste der zu erhaltenden Mods
+  let preserved = [];
+  const settingsPath = path.join(app.getPath("userData"), "settings.json");
+  if (fs.existsSync(settingsPath)) {
+    let settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+    preserved = settings.preservedMods || [];
+  }
+
+  const modsDir = "./minecraft/mods";
+
+  // Lösche nur die Dateien, die nicht in der Liste der zu erhaltenden Mods stehen
+  try {
+    if (fs.existsSync(modsDir)) {
+      const files = fs.readdirSync(modsDir);
+      for (const file of files) {
+        if (!preserved.includes(file)) {
+          fs.unlinkSync(path.join(modsDir, file));
+        }
+      }
+      console.log("Nicht geschützte Mods wurden gelöscht!");
+      mainWindow.webContents.send("minecraft-log", "Nicht geschützte Mods wurden gelöscht!");
+    }
+  } catch (error) {
+    console.log(`Fehler beim Löschen der Mods: ${error}`);
+    mainWindow.webContents.send("minecraft-log", `Fehler beim Löschen der Mods: ${error}`);
+  }
+
+  // Starte den Download der neuen Mods
   const downloader = new Downloader({
     url: "https://www.dropbox.com/scl/fo/k3bgafwk3g8gv20z89je9/AIAh3Z8CR_ssUGh2SBqYg5c?rlkey=sc958rganokob1wz809pudf01&st=ndu2kww6&dl=1",
-    directory: "./minecraft/mods",
+    directory: modsDir,
     fileName: "mods.zip",
     cloneFiles: false,
     onProgress: function (percentage, chunk, remainingSize) {
@@ -180,35 +215,13 @@ async function downloadMods() {
   });
 
   try {
-    fsExtra.emptyDir("./minecraft/mods");
-
-    console.log(`Mods erfolgreich gelöscht!`);
-    mainWindow.webContents.send(
-      "minecraft-log",
-      `Mods erfolgreich gelöscht!`
-    );
-  } catch (error) {
-    console.log(`Fehler beim löschen der Mods: ${error}`);
-    mainWindow.webContents.send(
-      "minecraft-log",
-      `Fehler beim löschen der Mods: ${error}`
-    );
-  }
-  
-  try {
     await downloader.download();
-    console.log(`Mods erfolgreich heruntergeladen!`);
-    mainWindow.webContents.send(
-      "minecraft-log",
-      `Mods erfolgreich heruntergeladen!`
-    );
+    console.log("Mods erfolgreich heruntergeladen!");
+    mainWindow.webContents.send("minecraft-log", "Mods erfolgreich heruntergeladen!");
     extractMods();
   } catch (error) {
     console.log(`Fehler beim Herunterladen der Mods: ${error}`);
-    mainWindow.webContents.send(
-      "minecraft-log",
-      `Fehler beim Herunterladen der Mods: ${error}`
-    );
+    mainWindow.webContents.send("minecraft-log", `Fehler beim Herunterladen der Mods: ${error}`);
   }
 }
 

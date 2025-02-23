@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   loadSettings: () => ipcRenderer.invoke("load-settings"),
   launchMinecraft: () => ipcRenderer.invoke("launch-minecraft"),
   onMinecraftLog: (callback) => ipcRenderer.on("minecraft-log", callback),
+  getModFiles: () => ipcRenderer.invoke("get-mod-files"),
   onMinecraftProgress: (callback) =>
     ipcRenderer.on("minecraft-progress", callback),
   onUpdateAvailable: (callback) => ipcRenderer.on("update_available", callback),
