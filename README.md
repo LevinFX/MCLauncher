@@ -11,7 +11,8 @@
 Here're some of the project's best features:
 
 *   Launch Minecrat (what a surprise!)
-*   Auto Download Modpack for our latest Server (WIP)
+*   Auto Download Modpack for our latest Server (currently none)
+*   See the status of the Server (currently displays the Status of GommeHD.net)
 
   
   
