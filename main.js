@@ -42,18 +42,25 @@ app.whenReady().then(() => {
     }
 
 
-    function downloadForge(){
+    async function downloadForge(){
         console.log("Forge wird heruntergeladen...");
-        const forgeVersion = "1.20.1";
-        const forgePath = path.join(app.getPath('userData'), 'forge_1_20_1.jar');
-        const forgeUrl = `https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.3.33/forge-1.20.1-47.3.33-installer.jar`;
-        const forgeFile = fs.createWriteStream(forgePath);
-        const request = require('https').get(forgeUrl, (response) => {
-            response.pipe(forgeFile);
-            forgeFile.on('finish', () => {
-                forgeFile.close();
-            });
+        const downloader = new Downloader({
+            url: "https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.3.33/forge-1.20.1-47.3.33-installer.jar",
+            directory: app.getPath('userData'),
+            fileName: "forge_1_20_1.jar",
+            cloneFiles: false,
+            onProgress: function (percentage, chunk, remainingSize) {
+                console.log(`${percentage}%`);
+                console.log(`Remaining Bytes: ${remainingSize}`);
+            }
         });
+
+        try {
+            await downloader.download();
+            console.log(`Forge erfolgreich heruntergeladen!`);
+        } catch (error) {
+            console.log(`Fehler beim Herunterladen von Forge: ${error}`);
+        }
     }
 
     function extractMods(){
@@ -115,7 +122,7 @@ app.whenReady().then(() => {
             const atoken = await xboxManager;
             let launchOpts = {
                 clientPackage: null,
-                authorization: token.mclc(),//mcl.Authenticator.validate(atoken.msToken.access_token, token.mcToken),
+                authorization: token.mclc(),
                 root: "./minecraft",
                 version: {
                     number: "1.20.1",
