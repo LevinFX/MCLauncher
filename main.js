@@ -6,6 +6,7 @@ const mcl = require("minecraft-launcher-core");
 const { Auth } = require("msmc");
 const { Downloader } = require("nodejs-file-downloader");
 const Admzip = require("adm-zip");
+const fsExtra = require('fs-extra');
 
 let mainWindow;
 
@@ -178,6 +179,22 @@ async function downloadMods() {
     },
   });
 
+  try {
+    fsExtra.emptyDir("./minecraft/mods");
+
+    console.log(`Mods erfolgreich gelöscht!`);
+    mainWindow.webContents.send(
+      "minecraft-log",
+      `Mods erfolgreich gelöscht!`
+    );
+  } catch (error) {
+    console.log(`Fehler beim löschen der Mods: ${error}`);
+    mainWindow.webContents.send(
+      "minecraft-log",
+      `Fehler beim löschen der Mods: ${error}`
+    );
+  }
+  
   try {
     await downloader.download();
     console.log(`Mods erfolgreich heruntergeladen!`);
