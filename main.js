@@ -3,9 +3,10 @@ const { autoUpdater } = require("electron-updater");
 const path = require("path");
 const fs = require("fs");
 const mcl = require("minecraft-launcher-core");
-const { Auth } = require("msmc");
+const { Auth, Minecraft } = require("msmc");
 const { Downloader } = require("nodejs-file-downloader");
 const Admzip = require("adm-zip");
+const { exec } = require("child_process");
 
 let mainWindow;
 
@@ -104,6 +105,55 @@ ipcMain.handle("get-mod-files", () => {
   }
   return [];
 });
+
+const javaDir = path.join(app.getPath("userData"), "java");
+const javaExePath = path.join(javaDir, "bin", "java.exe");
+
+async function ensureJavaInstalled() {
+  const javaPath = "C:\\Program Files\\Java\\jdk-23\\bin\\java.exe"; // ✅ Java 23 Pfad
+  if (fs.existsSync(javaPath)) {
+    console.log("Java 23 ist bereits installiert.");
+    mainWindow.webContents.send("minecraft-log", "Java 23 ist bereits installiert!");
+    return;
+  }
+
+  console.log("Java nicht gefunden, starte Download...");
+  mainWindow.webContents.send("minecraft-log", "Lade Java 23 herunter...");
+
+  const downloader = new Downloader({
+    url: "https://download.oracle.com/java/23/latest/jdk-23_windows-x64_bin.exe", // ✅ Java 23 Download
+    directory: app.getPath("userData"),
+    fileName: "java_installer.exe",
+    cloneFiles: false,
+  });
+
+  try {
+    await downloader.download();
+    console.log("Java 23 erfolgreich heruntergeladen!");
+    mainWindow.webContents.send("minecraft-log", "Java 23 heruntergeladen!");
+
+    mainWindow.webContents.send("minecraft-log", "Starte Java-Installation...");
+    
+    // ✅ Installiere Java 23 still (ohne GUI)
+    exec(`"${path.join(app.getPath("userData"), "java_installer.exe")}" /s`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Fehler bei der Java-Installation: ${error}`);
+        mainWindow.webContents.send("minecraft-log", `Fehler bei der Java-Installation: ${error}`);
+        return;
+      }
+      console.log("Java 23 erfolgreich installiert!");
+      mainWindow.webContents.send("minecraft-log", "Java 23 erfolgreich installiert!");
+      
+      // Lösche die Installer-EXE nach der Installation
+      fs.unlinkSync(path.join(app.getPath("userData"), "java_installer.exe"));
+    });
+
+  } catch (error) {
+    console.log(`Fehler beim Java-Download: ${error}`);
+    mainWindow.webContents.send("minecraft-log", `Fehler beim Java-Download: ${error}`);
+  }
+}
+
 
 async function downloadForge() {
   console.log("Forge wird heruntergeladen...");
@@ -227,82 +277,118 @@ async function downloadMods() {
 
 const authPath = path.join(app.getPath("userData"), "auth.json");
 
-ipcMain.handle("launch-minecraft", () => {
-  console.log("Launching Minecraft...");
+ipcMain.handle("launch-minecraft", async () => {
+  console.log("Starte Minecraft...");
+  await ensureJavaInstalled();
+
   const launcher = new mcl.Client();
-  const authManager = new Auth("select_account");
+  const authManager = new Auth("electron"); // Auth mit electron
   const settingsPath = path.join(app.getPath("userData"), "settings.json");
 
-  if (!fs.existsSync(path.join(app.getPath("userData"), "forge_1_20_1.jar"))) {
-    downloadForge();
+
+    // Falls Forge nicht existiert, lade es herunter
+    if (!fs.existsSync(path.join(app.getPath("userData"), "forge_1_20_1.jar"))) {
+      await downloadForge();
+    }
+  
+    await downloadMods();
+
+    
+  if (!fs.existsSync(settingsPath)) {
+    console.log("Fehlende Einstellungen. Minecraft kann nicht gestartet werden.");
+    return;
   }
-  downloadMods().then(() => {
-    if (fs.existsSync(settingsPath)) {
-      let settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
 
-      // Prüfe, ob ein Auth-Token zwischengespeichert wurde
-      if (fs.existsSync(authPath)) {
-        let cached = JSON.parse(fs.readFileSync(authPath, "utf8"));
-        let launchOpts = {
-          clientPackage: null,
-          authorization: cached.token,
-          root: "./minecraft",
-          version: { number: "1.20.1", type: "release" },
-          memory: { max: settings.ramMax + "M", min: settings.ramMin + "M" },
-          forge: path.join(app.getPath("userData"), "forge_1_20_1.jar"),
-        };
+  let settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+  let tokenData = null;
 
-        launcher.launch(launchOpts);
+  // Prüfe, ob ein gespeicherter Auth-Token existiert
+  if (fs.existsSync(authPath)) {
+    try {
+      tokenData = JSON.parse(fs.readFileSync(authPath, "utf8"));
+      console.log("Gespeicherten Token gefunden.");
+    } catch (error) {
+      console.log("Fehler beim Lesen des gespeicherten Tokens, erneute Anmeldung erforderlich.");
+    }
+  }
 
-        launcher.on("debug", (e) => {
-          console.log(e);
-          mainWindow.webContents.send("minecraft-log", e);
-          if (e.toString().includes("Launching with arguments")) {
-            console.log("App schließt in 15 Sekunden...");
-            setTimeout(() => {
-              app.quit();
-            }, 15000);
-          }
-        });
-        launcher.on("data", (e) => {
-          console.log(e);
-          mainWindow.webContents.send("minecraft-log", e);
-        });
-      } else {
-        // Kein gespeicherter Token – führe die Authentifizierung durch
-        authManager.launch("electron").then(async (xboxManager) => {
-          const token = await xboxManager.getMinecraft();
-          // Speichere den erhaltenen Token
-          fs.writeFileSync(authPath, JSON.stringify({ token: token.mclc() }));
-          let launchOpts = {
-            clientPackage: null,
-            authorization: token.mclc(),
-            root: "./minecraft",
-            version: { number: "1.20.1", type: "release" },
-            memory: { max: settings.ramMax + "M", min: settings.ramMin + "M" },
-            forge: path.join(app.getPath("userData"), "forge_1_20_1.jar"),
-          };
+  if (tokenData) {
+    try {
+      console.log("Prüfe gespeicherten Token...");
+      const xboxManager = new Auth("electron");
 
-          launcher.launch(launchOpts);
+      // **Microsoft-Token erneuern**
+      const refreshedToken = await xboxManager.refresh(tokenData.token);
 
-          launcher.on("debug", (e) => {
-            console.log(e);
-            mainWindow.webContents.send("minecraft-log", e);
-            if (e.toString().includes("Launching with arguments")) {
-              console.log("App schließt in 15 Sekunden...");
-              setTimeout(() => {
-                app.quit();
-              }, 15000);
-            }
-          });
-          launcher.on("data", (e) => {
-            console.log(e);
-            mainWindow.webContents.send("minecraft-log", e);
-          });
-        });
+      if (refreshedToken) {
+        console.log("Token erfolgreich erneuert.");
+        fs.writeFileSync(authPath, JSON.stringify({ token: refreshedToken })); // Speichere den erneuerten Token
+
+        // **Starte Minecraft mit dem erneuerten Token**
+        launchGame(refreshedToken.mclc(), settings, launcher);
+        return;
       }
-    } else {
-      console.log("Error Launching because of not existing settings.");
+    } catch (error) {
+      console.log("Gespeicherter Token ungültig oder nicht erneuerbar. Erneute Anmeldung erforderlich.");
+    }
+  }
+
+  // Falls kein gültiger Token existiert, mache eine neue Anmeldung
+  authenticateAndLaunch(authManager, settings, launcher);
+});
+
+/**
+ * Führt die Authentifizierung durch und startet Minecraft.
+ */
+async function authenticateAndLaunch(authManager, settings, launcher) {
+  try {
+    console.log("Benutzer muss sich anmelden...");
+    const xboxManager = await authManager.launch("electron"); // Anmeldung
+    const token = await xboxManager.getMinecraft();
+
+    // Speichere den neuen Token
+    fs.writeFileSync(authPath, JSON.stringify({ token: token }));
+
+    console.log("Neuer Token gespeichert, starte Minecraft...");
+    launchGame(token.mclc(), settings, launcher);
+  } catch (error) {
+    console.log("Fehler bei der Authentifizierung:", error);
+    mainWindow.webContents.send("minecraft-log", "Fehler bei der Anmeldung!");
+  }
+}
+
+/**
+ * Startet Minecraft mit den gegebenen Einstellungen.
+ */
+async function launchGame(authToken, settings, launcher) {
+
+  let launchOpts = {
+    clientPackage: null,
+    authorization: authToken,
+    root: "./minecraft",
+    version: { number: "1.20.1", type: "release" },
+    memory: { max: settings.ramMax + "M", min: settings.ramMin + "M" },
+    forge: path.join(app.getPath("userData"), "forge_1_20_1.jar"),
+    javaPath: "C:\\Program Files\\Java\\jdk-23\\bin\\java.exe", // ✅ Java 23 statt Java 8
+  };
+
+  launcher.launch(launchOpts);
+
+  launcher.on("debug", (e) => {
+    console.log(e);
+    mainWindow.webContents.send("minecraft-log", e);
+    if (e.toString().includes("Launching with arguments")) {
+      console.log("App schließt in 15 Sekunden...");
+      setTimeout(() => {
+        app.quit();
+      }, 15000);
     }
   });
-});
+
+  launcher.on("data", (e) => {
+    console.log(e);
+    mainWindow.webContents.send("minecraft-log", e);
+  });
+}
+
+

@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const serverStatusDiv = document.getElementById("server-status");
-  const serverIP = "GommeHD.net";
+  const serverIP = "levinjs.de";
   const apiUrl = `https://api.mcsrvstat.us/2/${serverIP}`;
 
   fetch(apiUrl)
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .map((player) => {
               return `
                 <div class="player">
-                  <img src="https://craftatar.com/avatars/${player}?size=50" alt="${player}" class="avatar">
+                  <img src="https://crafatar.com/avatars/${player}?size=50" alt="${player}" class="avatar">
                   <span class="player-name">${player}</span>
                 </div>
               `;
