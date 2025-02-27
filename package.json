@@ -1,13 +1,11 @@
 {
   "name": "levinlauncher",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A Minecraft Launcher for my Servers",
   "main": "main.js",
   "scripts": {
     "test": "electron .",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "build": "npx electron-builder --win"
   },
   "repository": {
     "type": "git",
@@ -24,7 +22,26 @@
     "nodejs-file-downloader": "^4.13.0"
   },
   "build": {
-    "appId": "de.levinjs.mclauncher",
+    "appId": "de.levinjs.levinlauncher",
+    "productName": "levinlauncher",
+    "copyright": "© 2025 LevinFX",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "./logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    },
     "publish": [
       {
         "provider": "github",
@@ -34,7 +51,6 @@
     ]
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.7.0",
     "@electron-forge/maker-deb": "^7.7.0",
     "@electron-forge/maker-rpm": "^7.7.0",
     "@electron-forge/maker-squirrel": "^7.7.0",
@@ -43,6 +59,7 @@
     "@electron-forge/plugin-fuses": "^7.7.0",
     "@electron-forge/publisher-github": "^7.7.0",
     "@electron/fuses": "^1.8.0",
-    "electron": "^33.4.1"
+    "electron": "^33.4.1",
+    "electron-builder": "^25.1.8"
   }
 }

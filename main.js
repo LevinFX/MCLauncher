@@ -85,6 +85,11 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
+
+
 ipcMain.handle("save-settings", (event, settings) => {
   const settingsPath = path.join(app.getPath("userData"), "settings.json");
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
