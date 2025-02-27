@@ -1,6 +1,6 @@
 {
   "name": "levinlauncher",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Minecraft Launcher for my Servers",
   "main": "main.js",
   "scripts": {
